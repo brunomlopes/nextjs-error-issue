@@ -6,20 +6,17 @@ import {
   RepositoryCommits,
   getRepositoryCommits,
 } from "../../../utils/githubAPI";
+import { isArray } from "util";
 
 interface RepoCommitsProps {
-  commits: ICommit[];
+  repoCommits: RepositoryCommits;
 }
 
-const RepoCommits: NextPage<RepoCommitsProps> = ({ commits }) => {
+const RepoCommits: NextPage<RepoCommitsProps> = ({ repoCommits }) => {
+  const { commits, nextPage, prevPage, owner, repo } = repoCommits;
   const router = useRouter();
   // const { owner, repo } = router.query;
 
-  // const [commits, setCommits] = useState<Commit[]>([]);
-
-  // useEffect(() => {}, [owner, repo]);
-  const owner = "test";
-  const repo = "testrepo";
   return (
     <div>
       <h1>
@@ -37,6 +34,14 @@ const RepoCommits: NextPage<RepoCommitsProps> = ({ commits }) => {
           </li>
         ))}
       </ul>
+      <div>
+        {prevPage && (
+          <a href={`/commits/${owner}/${repo}?page=${prevPage}`}>&lt;</a>
+        )}
+        {nextPage && (
+          <a href={`/commits/${owner}/${repo}?page=${nextPage}`}>&gt;</a>
+        )}
+      </div>
     </div>
   );
 };
@@ -68,19 +73,24 @@ const withInnovationCastContext =
 
 export const getServerSideProps: GetServerSideProps = withInnovationCastContext<
   {},
-  [{ commits: ICommit[] }]
+  [{ commits: RepositoryCommits }]
 >({
   fn: async (d, data) => {
-    const commits = data[0] || null;
-    return { props: { commits } };
+    const repoCommits = data[0] || null;
+    return { props: { repoCommits } };
   },
   requests: (ctx, config) => {
-    const { owner, repo } = ctx.query;
+    const { owner, repo, page } = ctx.query;
+
+    var pageInt: number | undefined = undefined;
+    if (Array.isArray(page)) pageInt = parseInt(page[0], 10);
+    else if (page) pageInt = parseInt(page, 10);
 
     const fetchCommits = async () => {
       const commits = await getRepositoryCommits(
         owner as string,
-        repo as string
+        repo as string,
+        pageInt
       );
       return commits;
     };
