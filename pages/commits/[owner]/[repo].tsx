@@ -7,6 +7,7 @@ import {
   getRepositoryCommits,
 } from "../../../utils/githubAPI";
 import { isArray } from "util";
+import { isAxiosError } from "axios";
 
 interface RepoCommitsProps {
   repoCommits: RepositoryCommits;
@@ -46,24 +47,40 @@ const RepoCommits: NextPage<RepoCommitsProps> = ({ repoCommits }) => {
   );
 };
 
+interface WithInnovationCastContextReturnType<T, D = []> {
+  fn: ICContextCallbackFnType<T, D>;
+  requests?: (
+    context: GetServerSidePropsContext,
+    siteConfig: SiteConfig
+  ) => any[];
+  pageOptions?: PageOptions;
+}
+
 const withInnovationCastContext =
   <T, D = []>({
     fn,
     requests = () => [],
     pageOptions = {},
-  }: {
-    fn: ICContextCallbackFnType<T, D>;
-    requests?: (
-      context: GetServerSidePropsContext,
-      siteConfig: SiteConfig
-    ) => any[];
-    pageOptions?: PageOptions;
-  }) =>
+  }: WithInnovationCastContextReturnType<T, D>) =>
   async (context: GetServerSidePropsContext) => {
     const dataPromise = Promise.all([
-      ...requests(context, {}).map(async (request) =>
-        request ? await request() : undefined
-      ),
+      ...requests(context, {}).map(async (request) => {
+        if (!request) return undefined;
+        try {
+          return await request();
+        } catch (e) {
+          console.log(e);
+          if (isAxiosError(e)) {
+            if (e?.response?.status == 404) {
+              var error = { statusCode: 404 };
+              throw new Error("Not found", { cause: error });
+            }
+          }
+
+          throw e;
+        }
+        return request ? await request() : undefined;
+      }),
     ]);
 
     const data: unknown[] = await dataPromise;

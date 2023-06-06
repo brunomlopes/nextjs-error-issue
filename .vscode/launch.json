@@ -12,6 +12,15 @@
       "env": {
         "PATH": "D:\\servers\\node-v18.15.0-win-x64\\;${env:PATH}"
       }
+    },
+    {
+      "name": "Next.js: debug full stack (start)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run start",
+      "env": {
+        "PATH": "D:\\servers\\node-v18.15.0-win-x64\\;${env:PATH}"
+      }
     }
   ]
 }

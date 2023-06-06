@@ -14,8 +14,24 @@ function Error({ statusCode }: ErrorProps) {
   );
 }
 
+interface ErrorCauseWithStatusCode {
+  statusCode: number;
+}
+
+function isErrorCauseWithStatusCode(e: any): e is ErrorCauseWithStatusCode {
+  return (e as ErrorCauseWithStatusCode).statusCode !== undefined;
+}
+
 Error.getInitialProps = ({ res, err }: NextPageContext): ErrorProps => {
-  const statusCode = res?.statusCode ?? err?.statusCode ?? 404;
+  const statusCode =
+    err?.statusCode ??
+    (isErrorCauseWithStatusCode(err?.cause)
+      ? err?.cause?.statusCode
+      : undefined) ??
+    res?.statusCode ??
+    404;
+  if (res == undefined) return { statusCode };
+  if (statusCode == 404) res.statusCode = statusCode;
   return { statusCode };
 };
 
