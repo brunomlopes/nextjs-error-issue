@@ -18,7 +18,8 @@ interface ErrorCauseWithStatusCode {
   statusCode: number;
 }
 
-function isErrorCauseWithStatusCode(e: any): e is ErrorCauseWithStatusCode {
+function isErrorCauseWithStatusCode(e: any): e is ErrorCauseWithStatusCode 
+  if (!e) return false;
   return (e as ErrorCauseWithStatusCode).statusCode !== undefined;
 }
 
